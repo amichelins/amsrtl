@@ -19,36 +19,6 @@ type Tokens struct {
     Limit int64  `json:"limit"`
 }
 
-/*
-type Tokens struct {
-    Token string `json:"token"`
-    Limit int64  `json:"limit"`
-}
-
-func main() {
-    var Tokens []Tokens
-    var dados map[string]int64 = make(map[string]int64)
-    //t := `[{"wewewewe":10},{"cdflsjlsjfljlj":45}]`
-    t := `[{"token":"wewewewe", "limit": 23},{"token":"cdflsjlsjfljlj", "limit": 45}]`
-
-    err := json.Unmarshal([]byte(t), &Tokens)
-
-    if err != nil {
-        panic(err)
-    }
-
-    for _, value := range Tokens {
-        fmt.Printf("%s = %d \n", value.Token, value.Limit)
-        dados[value.Token] = value.Limit
-    }
-
-    for key, value := range dados {
-        fmt.Printf("%s = %d \n", key, value)
-    }
-}
-
-
-*/
 const (
     // Numero maximo de requisições por IP
     LIMITER_MAX = "LIMITER_MAX"
@@ -199,10 +169,8 @@ func (l *Limiter) GetHeaderLimit(r *http.Request) (string, int64) {
     if len(l.tokens) > 0 {
         for Token, Limit := range l.tokens {
             tokenValor := r.Header.Get("API_KEY")
-            if tokenValor != "" {
+            if tokenValor != "" && Token == tokenValor {
                 return tokenValor, Limit
-            } else {
-                fmt.Printf("wwwww  %s %d  %s", Token, Limit, tokenValor)
             }
         }
     }
@@ -226,7 +194,7 @@ func (l *Limiter) Run(w http.ResponseWriter, r *http.Request) error {
 
     // Verificamos se temos token para limitar
     token, limit := l.GetHeaderLimit(r)
-    fmt.Printf("TOKEN %d  Limit %d", limit, l.maxRequest)
+
     // Se o limit do token é maior que o do ip usamos os dados do token por que este tem prioridade
     if limit > l.maxRequest {
         sChave = token
