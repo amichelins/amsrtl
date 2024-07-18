@@ -10,7 +10,8 @@ import (
     "strings"
     "time"
 
-    uniqueid "github.com/albinj12/unique-id"
+    //uniqueid "github.com/albinj12/unique-id"
+    "github.com/google/uuid"
 )
 
 // Utilizado para receber os tokens via env
@@ -218,8 +219,8 @@ func (l *Limiter) Run(w http.ResponseWriter, r *http.Request) error {
         w.WriteHeader(http.StatusTooManyRequests)
         return fmt.Errorf("you have reached the maximum number of requests or actions allowed within a certain time frame")
     }
-    uni, _ := uniqueid.Generateid("n", 32, "Zid")
-
+    //uni, _ := uniqueid.Generateid("n", 32, "Zid")
+    uni := uuid.New().String()
     err = l.storage.SetData(ctx, sChave, uni, Max, Min)
 
     if err != nil {
