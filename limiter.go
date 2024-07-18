@@ -160,6 +160,10 @@ func NewEnvLimiter(storage Storage) *Limiter {
             }
         }
     }
+
+    //for key, value := range limiter.tokens {
+    //    fmt.Printf("ee %s  eeee %d ", key, value)
+    //}
     return &limiter
 }
 
@@ -170,6 +174,7 @@ func (l *Limiter) LimiterSetToken(token string, limiter int64) {
 
 // BlockAt Marca quando o bloqueio se inicio
 func (l *Limiter) BlockAt() {
+
     l.blockAt = time.Now()
     l.block = true
 }
@@ -179,7 +184,9 @@ func (l *Limiter) BlockAt() {
 func (l *Limiter) IsBlock() bool {
     // Verificamos se Now é menor que a data hora de incio do bloqueio mais o tempo do bloqueio mais 1
     // Tudo espresado em segundos
-    if l.block && time.Now().Before(l.blockAt.Add((1+l.blockDuration)*time.Second)) {
+    dBlockAt := l.blockAt
+
+    if l.block && time.Now().Unix() <= dBlockAt.Add(l.blockDuration).Unix() {
         return true
     } else {
         l.block = false
@@ -187,11 +194,15 @@ func (l *Limiter) IsBlock() bool {
     return false
 }
 
-func (l *Limiter) GetHederLimit(r *http.Request) (string, int64) {
+func (l *Limiter) GetHeaderLimit(r *http.Request) (string, int64) {
+
     if len(l.tokens) > 0 {
         for Token, Limit := range l.tokens {
-            if tokenValor := r.Header.Get(Token); tokenValor != "" {
+            tokenValor := r.Header.Get("API_KEY")
+            if tokenValor != "" {
                 return tokenValor, Limit
+            } else {
+                fmt.Printf("wwwww  %s %d  %s", Token, Limit, tokenValor)
             }
         }
     }
@@ -205,16 +216,17 @@ func (l *Limiter) Run(w http.ResponseWriter, r *http.Request) error {
 
     // Se esta bloqueado respondo com bloqueio
     if l.IsBlock() {
+
         w.WriteHeader(http.StatusTooManyRequests)
-        return fmt.Errorf("you have reached the maximum number of requests or actions allowed within a certain time frame")
+        return fmt.Errorf("Your are BLOCKED. You have reached the maximum number of requests or actions allowed within a certain time frame. You will be unblocked in " + l.FormaBlock())
     }
 
     // Context utilizado no Storage
     ctx := r.Context()
 
     // Verificamos se temos token para limitar
-    token, limit := l.GetHederLimit(r)
-
+    token, limit := l.GetHeaderLimit(r)
+    fmt.Printf("TOKEN %d  Limit %d", limit, l.maxRequest)
     // Se o limit do token é maior que o do ip usamos os dados do token por que este tem prioridade
     if limit > l.maxRequest {
         sChave = token
@@ -247,6 +259,16 @@ func (l *Limiter) Run(w http.ResponseWriter, r *http.Request) error {
         return fmt.Errorf("Unable to set data in the storage, the error was: %s", err)
     }
     return nil
+}
+
+// IsBlock Verifica se esta bloqueado e se o tempo de bloqueio esta dentro do configurado.
+//         se estiver bloqueado e o tempo debloqueio espirou, ele desbloqueia
+func (l *Limiter) FormaBlock() string {
+    // Verificamos se Now é menor que a data hora de incio do bloqueio mais o tempo do bloqueio mais 1
+    // Tudo espresado em segundos
+    dBlockAt := l.blockAt
+
+    return dBlockAt.Add(l.blockDuration).Format("2006-01-02 15:04:05")
 }
 
 // Get the IP address of the server's connected user.
