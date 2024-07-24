@@ -10,5 +10,5 @@ Elas são :
        EX: [{"token":"TOKENA","limit": 10},{"token":"TOKENB","limit": 10}]
 
 Usar:
-    {storage} é um interface que permite varios tipos de storage
+    {storage} é um interface (localizada no arquivo storage.go) que permite varios tipos de storage
     amsrtl.NewEnvLimiter({storage})

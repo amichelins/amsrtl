@@ -1,11 +1,10 @@
 package storage_redis
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "github.com/redis/go-redis/v9"
-    //github.com/nu7hatch/gouuid
+	"github.com/redis/go-redis/v9"
 )
 
 // Implementação do Storage interface para o Redis
@@ -55,8 +54,4 @@ func (sr *StorageRedis) GetData(ctx context.Context, Chave string, Min float64, 
     }
 
     return nCount, nil
-}
-
-func (sr *StorageRedis) Limpar(ctx context.Context, Chave string, Min float64, Max float64) {
-    sr.redis.ZRemRangeByScore(ctx, Chave, fmt.Sprintf("%f", Min), fmt.Sprintf("%f", Max))
 }
